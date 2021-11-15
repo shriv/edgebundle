@@ -8,13 +8,14 @@
 #' @param xy coordinates of vertices
 #' @param bw bandwidth parameter
 #' @param decay decay parameter
+#' @param weight_column column of the weight (string) only works with tbl_graph object
 #' @return data.frame containing the bundled edges
 #' @author David Schoch
 #' @details see [online](https://github.com/schochastics/edgebundle) for plotting tips
 #' @seealso [edge_bundle_force],[edge_bundle_stub], [edge_bundle_path]
 #' @export
 
-edge_bundle_hammer <- function(object,xy,bw=0.05,decay=0.7){
+edge_bundle_hammer <- function(object,xy,bw=0.05,decay=0.7, weight_column){
   if (!requireNamespace('reticulate', quietly = TRUE)) {
     stop('The `reticulate` package is required for this functionality')
   }
@@ -31,9 +32,10 @@ edge_bundle_hammer <- function(object,xy,bw=0.05,decay=0.7){
       stop('The `tidygraph` package is required for this functionality')
     }
     object <- tidygraph::as.igraph(object)
+    weight_values <- object %>% activate("edges") %>% pull(weight_column)
     nodes <- data.frame(name=paste0("node",0:(igraph::vcount(object)-1)),x=xy[,1],y=xy[,2])
     el <- igraph::get.edgelist(object,names = FALSE)
-    el1 <- data.frame(source=el[,1]-1,target=el[,2]-1)
+    el1 <- data.frame(source=el[,1]-1,target=el[,2]-1, weight = weight_values)
 
   } else if(any(class(object)=="network")){
     nodes <- data.frame(name=paste0("node",0:(network::get.network.attribute(object,"n")-1)),x=xy[,1],y=xy[,2])
@@ -42,7 +44,7 @@ edge_bundle_hammer <- function(object,xy,bw=0.05,decay=0.7){
   } else{
     stop("only `igraph`, `network` or `tbl_graph` objects supported.")
   }
-  data_bundle <- shader_env$datashader_bundling$hammer_bundle(nodes,el1,initial_bandwidth = bw,decay = decay)
+  data_bundle <- shader_env$datashader_bundling$hammer_bundle(nodes,el1,initial_bandwidth = bw,decay = decay, weight = "weight")
   data_bundle$group <- is.na(data_bundle$y)+0
   data_bundle$group <- cumsum(data_bundle$group)+1
   data_bundle <- data_bundle[!is.na(data_bundle$y),]
