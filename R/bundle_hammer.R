@@ -49,7 +49,7 @@ edge_bundle_hammer <- function(object,xy,bw=0.05,decay=0.7, weight_column){
   data_bundle$group <- cumsum(data_bundle$group)+1
   data_bundle <- data_bundle[!is.na(data_bundle$y),]
   data_bundle$index <- unlist(sapply(table(data_bundle$group),function(x) seq(0,1,length.out=x)))
-  data_bundle[,c("x","y","index","group", "weight")]
+  data_bundle[,c("x","y","index","group")]
 }
 
 #' @title install python dependencies for hammer bundling
